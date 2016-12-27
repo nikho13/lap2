@@ -1,0 +1,179 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace ConsoleApplication4
+{
+    class Program
+    {
+       
+            static void Main(string[] args)
+            {
+                Builder b = Builder.getBuilder();
+
+                IBuilding g = b.construct(1);
+                IBuilding k = b.construct(2);
+
+                Troop t1, t2, t3, t4;
+                t1 = g.train();
+                t2 = g.train();
+                t3 = k.train();
+
+                t4 = new Corps();
+                t4.Add(t1);
+                t4.Add(t2);
+                t4.Add(t3);
+
+                ITask tsk = new Attacking();
+                t4.receiveTask(tsk);
+
+                ITask tsk2 = new Defending();
+                t4.receiveTask(tsk2);
+
+                Console.Read();
+            }   //end Main
+        }
+
+        #region IBuilding
+        public interface IBuilding
+        {
+            Troop train();
+        }
+
+        public class Garrison : IBuilding
+        {
+            public Troop train()
+            {
+                Console.WriteLine("Training a bowman...");
+                Bowman bm = new Bowman();
+                bm.atk = 50;
+                bm.def = 20;
+                bm.spd = 20;
+                bm.Range = 100;
+                return bm;
+            }
+        }
+
+        public class Stable : IBuilding
+        {
+            public Troop train()
+            {
+                Console.WriteLine("Training a knight...");
+                Knight kn = new Knight();
+                kn.atk = 150;
+                kn.def = 50;
+                kn.spd = 100;
+                return kn;
+            }
+        }
+        #endregion  //IBuilding
+
+        #region Troop
+        public abstract class Troop
+        {
+            public int atk { get; set; }
+            public int def { get; set; }
+            public int spd { get; set; }
+
+            public virtual void Add(Troop tr) { }
+            public virtual void Remove(Troop tr) { }
+            public abstract void receiveTask(ITask tsk);
+        }
+
+        public class Bowman : Troop
+        {
+            protected int range;
+
+            public int Range
+            {
+                get { return range; }
+                set { range = value; }
+            }
+
+            public override void receiveTask(ITask tsk)
+            {
+                tsk.perform(this);
+            }
+        }
+        public class Knight : Troop
+        {
+            public override void receiveTask(ITask tsk)
+            {
+                tsk.perform(this);
+            }
+        }
+        public class Corps : Troop
+        {
+            protected List<Troop> troops = new List<Troop>();
+
+            public override void Add(Troop tr) { troops.Add(tr); }
+            public override void Remove(Troop tr)
+            {
+                troops.Remove(tr);
+            }
+
+            public override void receiveTask(ITask tsk)
+            {
+                foreach (Troop tr in troops)
+                    tr.receiveTask(tsk);
+            }
+        }
+        #endregion  //Troop
+
+        #region ITask
+        public interface ITask
+        {
+            void perform(Bowman bm);
+            void perform(Knight kn);
+        }
+
+        public class Attacking : ITask
+        {
+            public void perform(Bowman bm)
+            {
+                Console.WriteLine("I am attacking from range  {0}...", bm.Range);
+            }
+            public void perform(Knight kn)
+            {
+                Console.WriteLine("I am in close combat...");
+            }
+        }
+
+        public class Defending : ITask
+        {
+            public void perform(Bowman bm)
+            {
+                Console.WriteLine("I am defending from range {0}...", bm.Range);
+            }
+            public void perform(Knight kn)
+            {
+                Console.WriteLine("I am in defending position...");
+            }
+        }
+        #endregion
+
+        #region Builder
+        public class Builder
+        {
+            protected static Builder builder;
+            protected Builder() { }
+            public static Builder getBuilder()
+            {
+                if (builder == null)
+                    builder = new Builder();
+                return builder;
+            }
+            public IBuilding construct(int type)
+            {
+                switch (type)
+                {
+                    case 1: return new Garrison();
+                    case 2: return new Stable();
+                    default: return null;
+                }
+            }
+        }
+        #endregion  //Builder
+    }
+
